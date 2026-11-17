@@ -36,13 +36,17 @@ jobs:
 
       - name: 🏗️ Build APK
         working-directory: ./android
+        env:
+          ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
         run: |
-          buildozer -v android debug 2>&1 | tail -150
+          yes | buildozer -v android debug
 
       - name: 📤 Upload APK artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: PDFMaster-APK
-          path: android/bin/*.apk
+          path: |
+            android/bin/*.apk
+            android/.buildozer/android/platform/build-*/dists/*/bin/*.apk
           retention-days: 30
