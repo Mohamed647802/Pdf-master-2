@@ -1,0 +1,17 @@
+{
+  "name": "pdf-master",
+  "version": "1.0.0",
+  "description": "Full-featured PDF Editor",
+  "scripts": {
+    "dev": "vite --port 3000",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
