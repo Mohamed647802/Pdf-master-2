@@ -6,7 +6,8 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 version = 1.0
 
-requirements = python3,kivy,requests
+# requests اتشال: main.py مش بيستخدمه، ووجوده كان بيشغّل خطوة pip الفاشلة
+requirements = python3,kivy,pyjnius,android
 
 orientation = portrait
 fullscreen = 0
@@ -14,7 +15,9 @@ android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,MANA
 
 android.minapi = 21
 android.targetapi = 33
-android.archs = arm64-v8a, armeabi-v7a
+# معمارية واحدة: بتتجنب إنشاء الـ venv مرتين
+android.archs = arm64-v8a
+android.accept_sdk_license = True
 
 android.icon.filename = %(source.dir)s/assets/icon.png
 android.presplash.filename = %(source.dir)s/assets/splash.png
