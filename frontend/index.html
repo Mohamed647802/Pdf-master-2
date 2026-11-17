@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PDF Master Editor - Full-featured PDF editing application">
+  <meta name="theme-color" content="#6366F1">
+  <link rel="manifest" href="./public/manifest.json">
+  <title>📄 PDF Master Editor</title>
+
+  <!-- Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./src/styles/main.css">
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>">
+
+  <style>
+    /* Inline critical styles for initial render */
+    body {
+      background: #0F0F1A;
+      color: #F0F0FF;
+      margin: 0;
+      overflow: hidden;
+    }
+    .app-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      background: #0F0F1A;
+      z-index: 9999;
+    }
+    .app-loading-logo {
+      font-size: 48px;
+      animation: pulse 1s ease-in-out infinite alternate;
+    }
+    .app-loading-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #6366F1;
+      font-family: system-ui, sans-serif;
+    }
+    .app-loading-bar {
+      width: 200px;
+      height: 3px;
+      background: #2D2D4E;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .app-loading-bar-fill {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #6366F1, #A78BFA);
+      border-radius: 2px;
+      animation: loadBar 1.5s ease forwards;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); opacity: 0.8; }
+      to { transform: scale(1.05); opacity: 1; }
+    }
+    @keyframes loadBar {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Initial loading splash -->
+  <div class="app-loading" id="app-loading">
+    <div class="app-loading-logo">📄</div>
+    <div class="app-loading-title">PDF Master</div>
+    <div class="app-loading-bar"><div class="app-loading-bar-fill"></div></div>
+  </div>
+
+  <!-- Main app container -->
+  <div id="app" style="display:none">
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="file-input" accept=".pdf" style="display:none">
+    <input type="file" id="image-input" accept="image/*" style="display:none">
+
+    <!-- TOOLBAR (injected by Toolbar.js) -->
+    <div id="toolbar-root"></div>
+
+    <!-- MAIN LAYOUT -->
+    <div class="main-layout">
+
+      <!-- LEFT SIDEBAR (injected by LeftSidebar.js) -->
+      <div id="left-sidebar-root"></div>
+
+      <!-- CANVAS AREA -->
+      <div class="canvas-area">
+        <!-- PDF VIEWER (injected by PDFViewer.js) -->
+        <div id="pdf-viewer-root" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div>
+      </div>
+
+      <!-- RIGHT SIDEBAR (injected by RightSidebar.js) -->
+      <div id="right-sidebar-root"></div>
+
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="status-bar" id="status-bar">
+      <span class="status-item">📄 No file open</span>
+      <span class="status-sep"></span>
+      <span class="status-item">Page: 0 / 0</span>
+      <span class="status-sep"></span>
+      <span class="status-item">Zoom: 150%</span>
+      <span class="status-sep"></span>
+      <span class="status-item">Tool: select</span>
+    </div>
+
+    <!-- MODALS ROOT (injected by Modals.js) -->
+    <div id="modals-root"></div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
+
+  </div>
+
+  <script type="module">
+    // ── Bootstrap: inject all component HTML, then load app.js ──
+
+    import { buildToolbar } from './src/components/Toolbar.js';
+    import { buildModals } from './src/components/Modals.js';
+    import { buildLeftSidebar } from './src/components/LeftSidebar.js';
+    import { buildRightSidebar } from './src/components/RightSidebar.js';
+    import { buildPDFViewer } from './src/components/PDFViewer.js';
+
+    // Inject component HTML
+    document.getElementById('toolbar-root').innerHTML = buildToolbar();
+    document.getElementById('modals-root').innerHTML = buildModals();
+    document.getElementById('left-sidebar-root').innerHTML = buildLeftSidebar();
+    document.getElementById('right-sidebar-root').innerHTML = buildRightSidebar();
+    document.getElementById('pdf-viewer-root').innerHTML = buildPDFViewer();
+
+    // Load main app
+    await import('./src/app.js');
+
+    // Hide splash, show app
+    const splash = document.getElementById('app-loading');
+    const app = document.getElementById('app');
+    splash.style.opacity = '0';
+    splash.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => {
+      splash.remove();
+      app.style.display = 'flex';
+      app.style.flexDirection = 'column';
+      app.style.height = '100vh';
+    }, 350);
+
+    // ── File input handlers ──
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) window.app.loadPDF(file);
+      e.target.value = '';
+    });
+
+    document.getElementById('image-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) window.app.handleImageUpload?.(file);
+      e.target.value = '';
+    });
+
+    // ── Drag-and-drop on main area ──
+    const appEl = document.getElementById('app');
+    appEl.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      appEl.classList.add('drag-active');
+    });
+
+    appEl.addEventListener('dragleave', (e) => {
+      if (!appEl.contains(e.relatedTarget)) appEl.classList.remove('drag-active');
+    });
+
+    appEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      appEl.classList.remove('drag-active');
+      const files = [...e.dataTransfer.files];
+      const pdf = files.find(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+      if (pdf) window.app.loadPDF(pdf);
+    });
+
+    // ── Merge drop zone drag events ──
+    document.addEventListener('dragover', (e) => {
+      const dz = document.getElementById('merge-drop-zone');
+      if (dz && dz.contains(e.target)) dz.classList.add('drag-over');
+    });
+    document.addEventListener('dragleave', (e) => {
+      const dz = document.getElementById('merge-drop-zone');
+      if (dz && !dz.contains(e.relatedTarget)) dz.classList.remove('drag-over');
+    });
+    document.addEventListener('drop', (e) => {
+      const dz = document.getElementById('merge-drop-zone');
+      if (dz && dz.contains(e.target)) {
+        e.preventDefault();
+        dz.classList.remove('drag-over');
+        window.app.handleMergeFiles([...e.dataTransfer.files]);
+      }
+    });
+
+    // Quality card selection highlight
+    document.addEventListener('change', (e) => {
+      if (e.target.name === 'compress-quality') {
+        document.querySelectorAll('.quality-card').forEach(c => c.classList.remove('active'));
+        e.target.closest('.quality-card')?.classList.add('active');
+      }
+    });
+
+  </script>
+
+</body>
+</html>
